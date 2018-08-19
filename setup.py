@@ -1,4 +1,3 @@
-import sys
 import pathlib
 
 import setuptools
@@ -31,7 +30,7 @@ setuptools.setup(
         "aiofiles",
         "asyncpg",
         "asyncio-contextmanager",
-        "slack-sansio",
+        "slack-sansio>=0.5.0",
         "gidgethub",
         "ujson",
         "apscheduler",

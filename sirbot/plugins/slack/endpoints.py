@@ -4,9 +4,10 @@ import logging
 import aiohttp.web
 from aiohttp.web import Response
 from slack.events import Event
+from slack.sansio import validate_request_signature
 from slack.actions import Action
 from slack.commands import Command
-from slack.exceptions import FailedVerification
+from slack.exceptions import InvalidRequest
 
 LOG = logging.getLogger(__name__)
 
@@ -20,11 +21,16 @@ async def incoming_event(request):
         if payload["token"] == slack.verify:
             return Response(body=payload["challenge"])
         else:
-            return Response(status=500)
+            return Response(status=401)
 
     try:
+        if slack.signing_secret:
+            validate_request_signature(
+                await request.text(), request.headers, slack.signing_secret
+            )
+
         event = Event.from_http(payload, verification_token=slack.verify)
-    except FailedVerification:
+    except InvalidRequest:
         return Response(status=401)
 
     if event["type"] == "message":
@@ -81,8 +87,13 @@ async def incoming_command(request):
     payload = await request.post()
 
     try:
+        if slack.signing_secret:
+            validate_request_signature(
+                await request.text(), request.headers, slack.signing_secret
+            )
+
         command = Command(payload, verification_token=slack.verify)
-    except FailedVerification:
+    except InvalidRequest:
         return Response(status=401)
 
     LOG.debug("Incoming command: %s", command)
@@ -99,8 +110,13 @@ async def incoming_action(request):
     LOG.log(5, "Incoming action payload: %s", payload)
 
     try:
+        if slack.signing_secret:
+            validate_request_signature(
+                await request.text(), request.headers, slack.signing_secret
+            )
+
         action = Action.from_http(payload, verification_token=slack.verify)
-    except FailedVerification:
+    except InvalidRequest:
         return Response(status=401)
 
     LOG.debug("Incoming action: %s", action)

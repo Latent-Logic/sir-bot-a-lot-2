@@ -25,6 +25,7 @@ class SlackPlugin:
     Args:
         token: slack authentication token (env var: `SLACK_TOKEN`).
         verify: slack verification token (env var: `SLACK_VERIFY`).
+        signing_secret: slack signing secret (env var: `SLACK_SIGNING_SECRET`)
         bot_id: bot id (env var: `SLACK_BOT_ID`).
         bot_user_id: user id of the bot (env var: `SLACK_BOT_USER_ID`).
         admins: list of slack admins user id (env var: `SLACK_ADMINS`).
@@ -36,12 +37,20 @@ class SlackPlugin:
     __name__ = "slack"
 
     def __init__(
-        self, *, token=None, verify=None, bot_id=None, bot_user_id=None, admins=None
+        self,
+        *,
+        token=None,
+        verify=None,
+        bot_id=None,
+        bot_user_id=None,
+        admins=None,
+        signing_secret=None
     ):
         self.api = None
         self.token = token or os.environ["SLACK_TOKEN"]
         self.admins = admins or os.environ.get("SLACK_ADMINS", [])
-        self.verify = verify or os.environ["SLACK_VERIFY"]
+        self.verify = verify or os.environ.get("SLACK_VERIFY")
+        self.signing_secret = signing_secret or os.environ.get("SLACK_SIGNING_SECRET")
         self.bot_id = bot_id or os.environ.get("SLACK_BOT_ID")
         self.bot_user_id = bot_user_id or os.environ.get("SLACK_BOT_USER_ID")
         self.handlers_option = {}
